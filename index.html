@@ -1,301 +1,631 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-GB">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Gaydar — Totally Scientific™ Phone App</title>
-  <meta name="theme-color" content="#111827" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BritFit — Three‑Day Programme</title>
+  <meta name="description" content="A tidy, UK‑themed workout web app: three-day programme, time-box modes, RPE guide, timers, notes and habit architecture." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%2300247D'/%3E%3Cpath d='M0 0 L72 72 M72 0 L0 72' stroke='%23CF142B' stroke-width='12'/%3E%3Cpath d='M0 0 L72 72 M72 0 L0 72' stroke='%23fff' stroke-width='6'/%3E%3Crect x='26' y='0' width='20' height='72' fill='%23fff'/%3E%3Crect x='0' y='26' width='72' height='20' fill='%23fff'/%3E%3Crect x='28' y='0' width='16' height='72' fill='%23CF142B'/%3E%3Crect x='0' y='28' width='72' height='16' fill='%23CF142B'/%3E%3C/svg%3E" />
   <style>
-    :root {
-      --bg: radial-gradient(1200px 800px at 50% -10%, #1f2937, #0b1220 60%, #05080f 100%);
-      --glass: rgba(255,255,255,0.06);
-      --glass-2: rgba(255,255,255,0.12);
-      --accent: #60a5fa;
+    :root{
+      --navy:#00247D; /* Union Jack blue */
+      --red:#CF142B;  /* Union Jack red */
+      --cream:#F7F7F7;
+      --ink:#101418;
+      --ink-2:#2b2f33;
+      --ink-3:#555b61;
+      --line:#d7dbe0;
+      --ok:#1b8a5a;
+      --warn:#b06e00;
+      --accent:#0b5fff; /* link focus */
+      --card:#ffffff;
+      --shadow:0 8px 24px rgba(0,0,0,.08);
+      --radius:18px;
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      color: #e5e7eb; background: var(--bg); -webkit-tap-highlight-color: transparent;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink); background:linear-gradient(180deg,#eef2ff, #fff 160px) fixed;
     }
-    .wrap {
-      min-height: 100%; padding: env(safe-area-inset-top) 16px calc(16px + env(safe-area-inset-bottom));
-      display: grid; grid-template-rows: auto 1fr auto; max-width: 520px; margin: 0 auto;
+    header{
+      position:sticky; top:0; z-index:10;
+      background:
+        repeating-linear-gradient(135deg, var(--navy) 0 16px, transparent 16px 32px),
+        repeating-linear-gradient(45deg, var(--red) 0 16px, transparent 16px 32px),
+        var(--navy);
+      color:#fff;
+      box-shadow:0 6px 20px rgba(0,0,0,.15);
     }
-    header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 18px 4px 8px; }
-    .brand { font-weight: 800; letter-spacing: .2px; font-size: 20px; }
-    .badge { font-size: 11px; opacity:.8; padding:4px 8px; border-radius:999px; background:var(--glass); border:1px solid rgba(255,255,255,.08)}
+    .wrap{max-width:1100px; margin:0 auto; padding:0 16px}
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 0}
+    .brand{display:flex; align-items:center; gap:12px}
+    .flag{width:28px; height:28px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.2); overflow:hidden}
+    .title{font-weight:800; letter-spacing:.2px; font-size:20px}
+    .subtitle{opacity:.9; font-size:12px}
+    nav.tabs{display:flex; gap:8px; flex-wrap:wrap}
+    nav.tabs button{appearance:none; border:none; background:#fff; color:var(--ink); padding:10px 14px; border-radius:999px; cursor:pointer; font-weight:700; box-shadow:0 2px 10px rgba(0,0,0,.15)}
+    nav.tabs button[aria-selected="true"]{background:var(--red); color:#fff}
 
-    .card { background: var(--glass); border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 18px; backdrop-filter: blur(8px); box-shadow: 0 8px 30px rgba(0,0,0,.35); }
-    .center { display:grid; place-items:center; text-align:center; }
+    main{padding:18px 0 48px}
+    section{display:none}
+    section.active{display:block}
 
-    .cta { appearance:none; border:0; border-radius: 14px; padding: 16px 18px; font-weight: 800; font-size: 18px; letter-spacing:.3px; width: 100%; cursor:pointer; color:#0b1220; background: linear-gradient(90deg, #22d3ee, #a78bfa, #fb7185); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
-    .cta:active { transform: translateY(1px); }
+    .panel{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+    .grid{display:grid; gap:16px}
+    .grid.cols-2{grid-template-columns:1fr;}
+    @media (min-width: 920px){ .grid.cols-2{grid-template-columns:1.2fr .8fr;} }
 
-    .hint { font-size: 12px; opacity: .7; margin-top: 10px; }
+    .mode-picker{display:flex; gap:8px; flex-wrap:wrap}
+    .seg{position:relative}
+    .seg input{position:absolute; inset:0; opacity:0}
+    .seg label{display:inline-block; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:999px; cursor:pointer; font-weight:700}
+    .seg input:checked + label{background:var(--navy); border-color:var(--navy); color:#fff}
 
-    /* Scanner */
-    #scan { display:none; }
-    .radar {
-      width: 240px; height: 240px; border-radius: 50%; position: relative; overflow: hidden;
-      background: radial-gradient(#1a2a44 25%, #0f2038 60%, #0b1729 100%);
-      border: 2px solid rgba(255,255,255,.08);
-      box-shadow: inset 0 0 40px rgba(0,0,0,.5), 0 12px 40px rgba(0,0,0,.35);
-      margin: 8px auto 16px;
-    }
-    .gridline { position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(255,255,255,.10); }
-    .gridline.gl2 { width: 70%; height: 70%; left:15%; top:15%; }
-    .gridline.gl3 { width: 40%; height: 40%; left:30%; top:30%; }
-    .sweep {
-      position:absolute; width:50%; height: 50%; left:50%; top:50%; transform-origin:0 100%;
-      background: conic-gradient(from 0deg, rgba(96,165,250,.35), rgba(96,165,250,0) 60%);
-      animation: spin 2.4s linear infinite;
-      filter: drop-shadow(0 0 12px rgba(96,165,250,.55));
-      border-top-left-radius: 200px;
-    }
-    @keyframes spin { to { transform: rotate(360deg) translateZ(0); } }
+    .days{display:flex; flex-wrap:wrap; gap:10px}
+    .day-btn{flex:1 1 160px; min-width:160px; border:1px solid var(--line); background:#fff; border-radius:14px; padding:12px; cursor:pointer; text-align:left; box-shadow:0 2px 12px rgba(0,0,0,.07)}
+    .day-btn.active{outline:3px solid var(--red)}
+    .small{font-size:12px; color:var(--ink-3)}
 
-    .scan-msg { min-height: 52px; font-size:14px; opacity:.9; }
-    .progress { height: 8px; background: rgba(255,255,255,.1); border-radius: 999px; overflow: hidden; }
-    .bar { height: 100%; width:0%; background: linear-gradient(90deg, #22d3ee, #a78bfa, #fb7185); transition: width .25s ease; }
+    .block{border:1px dashed var(--line); border-radius:12px; padding:12px; display:grid; gap:8px}
+    .block h4{margin:0; font-size:16px}
+    .muted{color:var(--ink-3)}
+    .tag{display:inline-block; font-size:12px; background:#eef3ff; color:#183c8a; border:1px solid #c9d7ff; padding:2px 8px; border-radius:999px; font-weight:700}
+    .warn{background:#fff5e6; color:#7a4a00; border-color:#ffd89b}
+    .good{background:#e9fff3; color:#0b5d3b; border-color:#b9f1d4}
 
-    /* Result */
-    #result { display:none; }
-    .rainbow {
-      font-size: 40px; font-weight: 900; line-height:1.1; margin: 6px 0 10px;
-      background: conic-gradient(from 180deg, #ef4444, #f59e0b, #22c55e, #06b6d4, #3b82f6, #a855f7, #ef4444);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      text-shadow: 0 2px 22px rgba(255,255,255,0.08);
-    }
-    .sub { font-size: 14px; opacity: .85; }
+    .kv{display:grid; grid-template-columns:120px 1fr; gap:8px; align-items:center}
+    .sets{display:flex; gap:6px; flex-wrap:wrap}
+    .setbox{width:28px; height:28px; border:2px solid var(--line); border-radius:8px; display:grid; place-items:center; font-size:12px; cursor:pointer; user-select:none}
+    .setbox.done{background:var(--navy); color:#fff; border-color:var(--navy)}
 
-    .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
-    .btn {
-      appearance:none; border:1px solid rgba(255,255,255,.12); color:#e5e7eb; background: var(--glass);
-      padding: 12px 14px; border-radius: 12px; font-weight: 700; cursor: pointer;
-    }
-    .btn:active { transform: translateY(1px); }
+    .tip{background:linear-gradient(90deg, #fff 0, #f7faff 100%); border-left:6px solid var(--navy); padding:12px 12px 12px 16px; border-radius:12px}
+    .cta-row{display:flex; flex-wrap:wrap; gap:10px}
+    .btn{appearance:none; border:none; background:var(--navy); color:#fff; padding:10px 14px; border-radius:12px; font-weight:800; cursor:pointer}
+    .btn.alt{background:#fff; color:var(--navy); border:2px solid var(--navy)}
+    .btn.red{background:var(--red)}
+    .btn.ghost{background:#fff; border:1px solid var(--line); color:var(--ink-2)}
 
-    details { margin-top: 14px; }
-    summary { cursor: pointer; list-style: none; }
-    summary::-webkit-details-marker { display:none }
-    .field { display:flex; gap:8px; align-items:center; margin: 10px 0 8px; }
-    .input { flex:1; padding: 12px; border-radius: 12px; border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color:#e5e7eb; }
+    details{background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+    details summary{cursor:pointer; font-weight:800}
 
-    iframe { width: 100%; aspect-ratio: 16/9; border:0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
 
-    /* Meme GIF */
-    .meme-gif { width: 100%; height: auto; border-radius: 12px; margin-top: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    /* Timer */
+    .timer{display:grid; gap:16px}
+    .timeface{font-variant-numeric:tabular-nums; font-size:52px; font-weight:900; text-align:center; letter-spacing:1px}
+    .timehint{text-align:center; color:var(--ink-3)}
+    .timer-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .num{display:flex; flex-direction:column; gap:6px}
+    .num input{width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); font-weight:800; text-align:center}
 
-    footer { font-size: 11px; opacity:.7; padding: 18px 6px; text-align: center; }
+    /* Notes */
+    textarea{width:100%; min-height:160px; border-radius:12px; border:1px solid var(--line); padding:12px; font:inherit}
 
-    /* Confetti */
-    .confetti { position: fixed; top: -12px; width: 10px; height: 14px; will-change: transform, opacity; pointer-events: none; z-index: 50; opacity: 0.9; }
-    @keyframes drop {
-      0% { transform: translateY(-10vh) rotate(0deg); opacity:1; }
-      100% { transform: translateY(110vh) rotate(720deg); opacity:.9; }
-    }
-
-    /* Small devices tweaks */
-    @media (max-width: 380px) {
-      .rainbow { font-size: 34px; }
-      .radar { width: 200px; height:200px; }
-    }
+    /* Footer */
+    footer{margin-top:28px; text-align:center; color:var(--ink-3)}
+    a{color:var(--accent)}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">🌈 Gaydar</div>
-      <div class="badge">Totally Scientific™</div>
-    </header>
-
-    <main>
-      <!-- HOME -->
-      <section id="home" class="card center" aria-labelledby="title-home">
-        <h1 id="title-home" style="margin:6px 0 8px; font-size:22px;">Are you… ready?</h1>
-        <p class="sub" style="margin:0 0 14px">Tap below to begin the extremely serious scan.</p>
-        <button id="startBtn" class="cta">Start Scan</button>
-        <div class="hint">Optimised for phones • Vibration + sound on</div>
-      </section>
-
-      <!-- SCAN -->
-      <section id="scan" class="card center" aria-live="polite" aria-busy="true">
-        <div class="radar" role="img" aria-label="Scanning radar animation">
-          <div class="gridline"></div>
-          <div class="gridline gl2"></div>
-          <div class="gridline gl3"></div>
-          <div class="sweep"></div>
+  <header>
+    <div class="wrap topbar">
+      <div class="brand">
+        <div class="flag"><img alt="Union Jack" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%2300247D'/%3E%3Cpath d='M0 0 L72 72 M72 0 L0 72' stroke='%23CF142B' stroke-width='12'/%3E%3Cpath d='M0 0 L72 72 M72 0 L0 72' stroke='%23fff' stroke-width='6'/%3E%3Crect x='26' y='0' width='20' height='72' fill='%23fff'/%3E%3Crect x='0' y='26' width='72' height='20' fill='%23fff'/%3E%3Crect x='28' y='0' width='16' height='72' fill='%23CF142B'/%3E%3Crect x='0' y='28' width='72' height='16' fill='%23CF142B'/%3E%3C/svg%3E" width="28" height="28" /></div>
+        <div>
+          <div class="title">BritFit</div>
+          <div class="subtitle">Three‑Day Programme • UK‑inspired</div>
         </div>
-        <div id="scanMsg" class="scan-msg">Calibrating fabulousness…</div>
-        <div class="progress" aria-label="scan progress"><div id="bar" class="bar"></div></div>
-      </section>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button role="tab" aria-selected="true" data-tab="programme">Programme</button>
+        <button role="tab" aria-selected="false" data-tab="timer">Timer</button>
+        <button role="tab" aria-selected="false" data-tab="notes">Notes</button>
+        <button role="tab" aria-selected="false" data-tab="settings">Settings</button>
+        <button role="tab" aria-selected="false" data-tab="about">About</button>
+      </nav>
+    </div>
+  </header>
 
-      <!-- RESULT -->
-      <section id="result" class="card center" aria-labelledby="title-result">
-        <h2 id="title-result" class="rainbow">YOU ARE GAY 🏳️‍🌈</h2>
-        <div class="sub">Consensus reached by our panel of imaginary scientists.</div>
-        <!-- Fixed GIF at end -->
-        <img id="endGif" class="meme-gif" src="https://raw.githubusercontent.com/Lubo84/RetireWise-Images/main/gif.gif" data-loop="2100" alt="You Are Gay meme" loading="lazy" decoding="async" />
-        <div class="hint">Using hosted GIF from GitHub (raw) — update the URL above if you move it.</div>
-        <div class="row">
-          <button id="beepBtn" class="btn" title="Play a beep each GIF loop">🔊 Beep</button>
-          <button id="againBtn" class="btn">Run Again</button>
-          <button id="shareBtn" class="btn">Share</button>
-          <button id="copyBtn" class="btn">Copy Result</button>
+  <main class="wrap grid cols-2">
+    <!-- LEFT COLUMN -->
+    <section id="programme" class="active" role="tabpanel" aria-labelledby="Programme">
+      <div class="panel">
+        <div class="grid" style="gap:18px">
+          <div class="tip" id="tip"></div>
+          <div class="mode-picker" role="radiogroup" aria-label="Time‑box mode">
+            <div class="seg"><input type="radio" name="mode" id="m30" value="30" checked><label for="m30">30 min (Minimum)</label></div>
+            <div class="seg"><input type="radio" name="mode" id="m45" value="45"><label for="m45">45 min (Standard)</label></div>
+            <div class="seg"><input type="radio" name="mode" id="m60" value="60"><label for="m60">60 min (Full)</label></div>
+          </div>
+          <div class="days">
+            <button class="day-btn active" data-day="1">
+              <div><strong>Day 1</strong> — Squat • Push • Swings</div>
+              <div class="small">Lower‑body focus, press power, hip snap</div>
+            </button>
+            <button class="day-btn" data-day="2">
+              <div><strong>Day 2</strong> — Hinge • Press • Core</div>
+              <div class="small">Posterior chain + overhead strength</div>
+            </button>
+            <button class="day-btn" data-day="3">
+              <div><strong>Day 3</strong> — Lunge/Pull • Mixed Conditioning</div>
+              <div class="small">Single‑leg work + rowing variations</div>
+            </button>
+          </div>
+
+          <details open>
+            <summary>Universal 5‑minute warm‑up (RAMP)</summary>
+            <div class="grid" style="gap:8px; margin-top:8px">
+              <div>
+                <span class="tag">30s each • 2.5′</span>
+                <ul>
+                  <li>Jumping jacks or fast march</li>
+                  <li>Hip hinges</li>
+                  <li>Deep squat pry</li>
+                  <li>Arm circles</li>
+                  <li>Band pull‑aparts</li>
+                </ul>
+              </div>
+              <div>
+                <span class="tag">2 rounds • 10 reps</span>
+                <ul>
+                  <li>Glute bridge</li>
+                  <li>Dead bug</li>
+                  <li>Hands‑elevated push‑up</li>
+                </ul>
+              </div>
+              <div class="muted">Goal: feel warm, joints greased, breathing up but not gassed.</div>
+            </div>
+          </details>
+
+          <div id="session"></div>
+
+          <details>
+            <summary>Busy‑day minimums (6–8 minutes)</summary>
+            <div class="grid" style="gap:10px; margin-top:8px">
+              <div class="block">
+                <h4>Swing Ladder</h4>
+                <div class="muted">10/15/20 swings + 10 push‑ups; rest as needed.</div>
+                <div class="cta-row">
+                  <button class="btn alt" data-quick="ladder">Load in Timer</button>
+                </div>
+              </div>
+              <div class="block">
+                <h4>Strength Pair</h4>
+                <div class="muted">2 rounds — Goblet Squat 12, 1‑Arm Row 12/side.</div>
+                <div class="cta-row"><button class="btn alt" data-quick="pair">Load in Timer</button></div>
+              </div>
+              <div class="block">
+                <h4>Core & Shoulders</h4>
+                <div class="muted">3 rounds — Pallof 12/side, Band Face Pull 15.</div>
+                <div class="cta-row"><button class="btn alt" data-quick="core">Load in Timer</button></div>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>Evidence‑based consistency architecture</summary>
+            <ul>
+              <li><strong>Implementation intention</strong>: “On Mon/Wed/Fri at 6:30am in the living room, I’ll start the 5‑minute warm‑up.”</li>
+              <li><strong>Minimum viable session</strong>: do a 6–8 min option and tick the box.</li>
+              <li><strong>Habit stacking</strong>: pair with coffee; no brew until warm‑up is done.</li>
+              <li><strong>Environment design</strong>: keep KB visible; set the stage the night before.</li>
+              <li><strong>Friction kill‑switch</strong>: pre‑load timer/music; keep kit within 2m.</li>
+              <li><strong>Track & reward</strong>: keep a visible streak (calendar or app).</li>
+              <li><strong>Recovery</strong>: 7–8h sleep; protein each meal; gentle walks on off‑days.</li>
+            </ul>
+          </details>
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
 
-    <footer>
-      This is a light‑hearted, queer‑positive joke app. Sexual orientation isn’t something to “detect”. Be kind. 💖
-    </footer>
-  </div>
+    <section id="timer" role="tabpanel" aria-labelledby="Timer">
+      <div class="panel timer">
+        <div class="timeface" id="timeface">00:30</div>
+        <div class="timehint" id="timehint">Ready. Pick a mode and duration, then press Start.</div>
+        <div class="mode-picker" role="radiogroup" aria-label="Timer mode">
+          <div class="seg"><input type="radio" name="tt" id="tt-cd" value="cd" checked><label for="tt-cd">Countdown</label></div>
+          <div class="seg"><input type="radio" name="tt" id="tt-emom" value="emom"><label for="tt-emom">EMOM</label></div>
+          <div class="seg"><input type="radio" name="tt" id="tt-amrap" value="amrap"><label for="tt-amrap">AMRAP</label></div>
+        </div>
+        <div class="timer-grid">
+          <div class="num"><label>Minutes<input type="number" id="mins" min="0" value="0"></label></div>
+          <div class="num"><label>Seconds<input type="number" id="secs" min="0" max="59" value="30"></label></div>
+        </div>
+        <div class="cta-row">
+          <button class="btn" id="start">Start</button>
+          <button class="btn ghost" id="pause">Pause</button>
+          <button class="btn alt" id="reset">Reset</button>
+        </div>
+        <div class="small muted">Tip: EMOM = Every Minute On the Minute. AMRAP = As Many Rounds/Reps As Possible in the time.</div>
+      </div>
+    </section>
+
+    <section id="notes" role="tabpanel" aria-labelledby="Notes">
+      <div class="panel grid">
+        <div>
+          <label for="journal"><strong>Session notes</strong></label>
+          <textarea id="journal" placeholder="How’d the session feel? What was your RPE? Wins, tweaks, kit used…"></textarea>
+          <div class="cta-row">
+            <button class="btn" id="save-notes">Save notes</button>
+            <button class="btn alt" id="export-notes">Export notes (.json)</button>
+          </div>
+          <div class="small muted" id="notes-status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings" role="tabpanel" aria-labelledby="Settings">
+      <div class="panel grid">
+        <div class="block">
+          <h4>Intensity guide (RPE)</h4>
+          <div class="muted">Use <strong>RPE 7–8</strong> for main sets (2–3 reps in reserve), <strong>RPE 6–7</strong> for accessories, <strong>RPE 8–9</strong> on finishers.</div>
+        </div>
+        <div class="block">
+          <h4>Progression</h4>
+          <ul>
+            <li>Weeks 1–2: learn form; land mid rep ranges at RPE ~7–8.</li>
+            <li>Weeks 3–4: add 1–2 reps per set while keeping RPE ≤8.</li>
+            <li>Weeks 5–6: keep reps, increase load (7→9kg, 12→16kg) or add a set to mains.</li>
+            <li>Deload (optional): every 6th week, cut volume by ~40% to freshen up.</li>
+            <li>When kit tops out: slower eccentrics (4–5s), 1–2s pauses, –15–30s rest, or +1 set.</li>
+          </ul>
+        </div>
+        <div class="cta-row">
+          <button class="btn red" id="reset-progress">Reset all set ticks</button>
+          <button class="btn ghost" id="clear-storage">Clear saved data</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" role="tabpanel" aria-labelledby="About">
+      <div class="panel grid">
+        <div class="block">
+          <h4>About BritFit</h4>
+          <p>UK‑inspired design, practical programming. Built for home or gym with kettlebells (KB), dumbbells (DB) and a band. Language, colours and cheeky vibes: decidedly British. 🇬🇧</p>
+          <p class="muted">Disclaimer: This is general fitness information, not medical advice. Lift responsibly; maintain tidy form.</p>
+        </div>
+        <footer>Made with a proper brew and good manners.</footer>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: RPE & Session overview will render here within Programme -->
+  </main>
 
   <script>
-    // Compact DOM helpers
-    function $(sel){ return document.querySelector(sel); }
+    // ---------- Programme Data ----------
+    const PROGRAM = {
+      day1: {
+        title: 'Squat + Push + Swings',
+        blocks: [
+          { type:'Strength A', ex:'Goblet Squat', sets:4, reps:'6–10', load:'12–16kg KB', tempo:'3-1-1', rest:'90s', notes:'Too easy? Slow to 4-1-2 or add a pause. Too hard? 9kg DB.' },
+          { type:'Strength B', ex:'DB Floor Press', sets:4, reps:'6–10', load:'2×7–9kg', tempo:'3-1-1', rest:'90s', notes:'No bench needed; lock shoulder blades down. Swap to push-ups (band-assisted) if preferred.' },
+          { type:'Accessory 1', ex:'1‑Arm DB Row (bench/sofa support)', sets:3, reps:'8–12 / side', load:'7–9kg', tempo:'', rest:'60s', notes:'Keep ribs down; add isometric 1s squeeze at top.' },
+          { type:'Accessory 2', ex:'Band Face Pull or Pull‑Apart', sets:3, reps:'12–15', load:'Band to RPE 7', tempo:'', rest:'45–60s', notes:'Great posture antidote for desk work.' },
+          { type:'Finisher', ex:'EMOM: 12 KB Swings + 8 Push-ups (hands raised if needed)', sets:null, reps:'6–9′', load:'12–16kg', tempo:'', rest:'—', notes:'If HR spikes too high, cut reps not form.' },
+          { type:'Cool‑down', ex:'Calves / hip flexors / pec stretch', sets:null, reps:'2–3′', load:'—', tempo:'—', rest:'—', notes:'Long exhales: in 4s, out 6s.' },
+        ]
+      },
+      day2: {
+        title: 'Hinge + Press + Core',
+        blocks: [
+          { type:'Strength A', ex:'KB Romanian Deadlift', sets:4, reps:'6–10', load:'16kg (or 12kg)', tempo:'3-1-1', rest:'90s', notes:'Push hips back, soft knees, lats tight. Heavier? Slow to 4-1-2.' },
+          { type:'Strength B', ex:'DB Overhead Press (standing)', sets:4, reps:'6–10', load:'2×5–7kg', tempo:'', rest:'90s', notes:'Brace glutes & abs; no lean. Swap to half‑kneeling for core demand.' },
+          { type:'Accessory 1', ex:'Split Squat (rear‑foot flat)', sets:3, reps:'8–10 / side', load:'DBs 3–7kg', tempo:'', rest:'60s', notes:'Elevate front foot 2–5cm for ROM if comfy.' },
+          { type:'Accessory 2', ex:'Band Lat Pulldown/Row (door anchor)', sets:3, reps:'10–14', load:'RPE 7', tempo:'', rest:'45–60s', notes:'Angle body to adjust resistance.' },
+          { type:'Core', ex:'Pallof Press', sets:3, reps:'10–12 / side', load:'Band', tempo:'', rest:'45s', notes:'Anti‑rotation; slow reach.' },
+          { type:'Finisher', ex:'AMRAP: 10 KB Swings → 12 Alt Reverse Lunges (goblet) → 10 DB Presses', sets:null, reps:'10′', load:'12–16kg + DBs', tempo:'', rest:'—', notes:'Steady effort; nasal breathing if possible.' },
+          { type:'Cool‑down', ex:'Hamstrings / QL / shoulder stretch', sets:null, reps:'2–3′', load:'—', tempo:'—', rest:'—', notes:'Walk 2–3 min to downshift.' },
+        ]
+      },
+      day3: {
+        title: 'Lunge/Pull + Mixed Conditioning',
+        blocks: [
+          { type:'Strength A', ex:'Bulgarian Split Squat', sets:4, reps:'6–10 / side', load:'7–9kg DB(s)', tempo:'3-1-1', rest:'90s', notes:'Use sofa/chair. No bench? Standard lunge.' },
+          { type:'Strength B', ex:'1‑Arm DB Row (change angle vs Day 1)', sets:4, reps:'8–12 / side', load:'7–9kg', tempo:'', rest:'90s', notes:'Try chest‑supported on cushions if shoulders tired.' },
+          { type:'Accessory 1', ex:'DB Floor Flye or Band Chest Press', sets:3, reps:'10–12', load:'Light–moderate', tempo:'', rest:'60s', notes:'Slow stretch; protect shoulders.' },
+          { type:'Accessory 2', ex:'Hip Thrust / Glute Bridge', sets:3, reps:'12–15', load:'DB across hips', tempo:'', rest:'45–60s', notes:'Pause 2s at top.' },
+          { type:'Conditioning', ex:'KB Complex: 5 DL → 5 Swings → 5 Cleans/side → 5 Presses/side', sets:null, reps:'4–6 rounds', load:'12kg (or 16kg if crisp)', tempo:'', rest:'60–90s', notes:'Flow without setting bell down if safe.' },
+          { type:'Core', ex:'Side Plank', sets:2, reps:'30–45s / side', load:'—', tempo:'', rest:'30s', notes:'Stack feet for harder, knees for easier.' },
+          { type:'Cool‑down', ex:'Hip capsule / pec / upper‑back', sets:null, reps:'2–3′', load:'—', tempo:'—', rest:'—', notes:'Breathe long & slow.' },
+        ]
+      },
+      swaps: [
+        'No overhead pressing day? Use DB incline push‑up (hands on bench/sofa).',
+        'Back irritated? Swap RDL → Hip Thrust; keep hinge pattern light with tempo.',
+        'Shoulders grumpy? Use neutral‑grip presses/rows; emphasise band face pulls.'
+      ]
+    };
 
-    const home = $('#home');
-    const scan = $('#scan');
-    const result = $('#result');
-    const startBtn = $('#startBtn');
-    const againBtn = $('#againBtn');
-    const shareBtn = $('#shareBtn');
-    const copyBtn = $('#copyBtn');
-    const bar = $('#bar');
-    const scanMsg = $('#scanMsg');
-    const endGif = $('#endGif');
-    const beepBtn = $('#beepBtn');
+    const STORAGE_KEY = 'britfit-v1';
 
-    var ctx = null; // WebAudio (use var for older engines)
+    // ---------- Utilities ----------
+    const $ = (sel, el=document) => el.querySelector(sel);
+    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+    const save = (data) => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const load = () => JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    const state = load();
 
-    function ensureAudio(){
-      try {
-        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx && ctx.state === 'suspended' && ctx.resume) ctx.resume();
-      } catch(e) { /* ignore */ }
+    function setTab(tab){
+      $$('#'+tab).forEach(()=>{});
+      $$('main section').forEach(s=>s.classList.remove('active'));
+      $('#'+tab).classList.add('active');
+      $$('nav.tabs button').forEach(b=>{
+        b.setAttribute('aria-selected', String(b.dataset.tab===tab));
+      });
     }
 
-    var messages = [
-      'Consulting the auntie network…',
-      'Measuring sparkle radius…',
-      'Counting how many times you said “yas” this week…',
-      'Cross-checking playlist for Gaga, Bey, and Kylie…',
-      'Calibrating rainbow spectrum…',
-      'Running totally-not-science…',
-      'Sampling fabulousness…',
-      'Verifying with a panel of drag queens…'
+    // Tip rotator
+    const TIPS = [
+      'Start on time, finish on time. The finisher is the cherry, not the cake.',
+      'Keep reps tidy. A clean set today beats a messy PB tomorrow.',
+      'Breathe: in through the nose, out longer through the mouth.',
+      'Rack the bell with pride — tidy kit, tidy mind.',
+      'Two cues only: “ribs down, hips back” does wonders for hinges.'
     ];
+    function rotateTip(){ $('#tip').textContent = 'Coach’s note: '+TIPS[Math.floor(Math.random()*TIPS.length)]; }
 
-    function vibrate(pattern){ if (navigator.vibrate) navigator.vibrate(pattern); }
+    // ---------- Session Rendering ----------
+    function currentMode(){ return document.querySelector('input[name="mode"]:checked').value; }
 
-    function beep(ms, freq){
-      ms = ms || 120; freq = freq || 880;
-      try {
-        ensureAudio();
-        var o = ctx.createOscillator();
-        var g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(freq, ctx.currentTime);
-        o.connect(g); g.connect(ctx.destination);
-        g.gain.setValueAtTime(0.001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
-        o.start();
-        setTimeout(function(){
-          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.02);
-          o.stop(ctx.currentTime + 0.03);
-        }, ms);
-      } catch(e) { /* ignore */ }
-    }
-
-    function show(el){ el.style.display = 'grid'; }
-    function hide(el){ el.style.display = 'none'; }
-
-    function confetti(count){
-      count = count || 80;
-      for(var i=0;i<count;i++){
-        var piece = document.createElement('i');
-        piece.className = 'confetti';
-        var size = 6 + Math.random()*8;
-        piece.style.width = size+'px';
-        piece.style.height = (size*1.4)+'px';
-        piece.style.left = (Math.random()*100)+'vw';
-        piece.style.background = 'hsl(' + (Math.random()*360) + ', 90%, 60%)';
-        piece.style.animation = 'drop ' + (3+Math.random()*2) + 's linear ' + (Math.random()*0.6) + 's forwards';
-        document.body.appendChild(piece);
-        setTimeout(function(p){ return function(){ p.remove(); }; }(piece), 6000);
+    function dynamicFinisher(day, base){
+      const m = currentMode();
+      if(day===1){
+        if(m==='30') return '4–6′ EMOM';
+        if(m==='45') return '6–9′ EMOM';
+        return '9–12′ EMOM';
       }
-    }
-
-    // ——— Beep loop synced to GIF (approx) ———
-    var beepTimer = null;
-    function getLoopMs(){
-      if (!endGif) return 2100;
-      var v = parseInt(endGif.getAttribute('data-loop'), 10);
-      return (isFinite(v) && v > 300) ? v : 2100;
-    }
-    function startBeepLoop(){
-      stopBeepLoop();
-      beep(90, 800);
-      beepTimer = setInterval(function(){ beep(90, 800); }, getLoopMs());
-      if (beepBtn) beepBtn.textContent = '🔇 Stop Beep';
-    }
-    function stopBeepLoop(){
-      if (beepTimer){ clearInterval(beepTimer); beepTimer = null; }
-      if (beepBtn) beepBtn.textContent = '🔊 Beep';
-    }
-
-    function startScan(){
-      ensureAudio();
-      hide(home); hide(result); show(scan);
-      vibrate([30, 40, 30]);
-      var idx = 0; var prog = 0;
-      scanMsg.textContent = messages[0];
-      bar.style.width = '0%';
-
-      var timer = null;
-      function step(){
-        prog = Math.min(100, prog + (100 / 12));
-        bar.style.width = prog + '%';
-        scanMsg.textContent = messages[idx % messages.length];
-        beep(90, 500 + Math.random()*600);
-        idx++;
-        if (prog >= 100) return finish();
-        timer = setTimeout(step, 420 + Math.random()*320);
+      if(day===2){
+        if(m==='30') return '6–8′ AMRAP';
+        if(m==='45') return base || '10′ AMRAP';
+        return '12–14′ AMRAP';
       }
-      timer = setTimeout(step, 400);
-
-      function finish(){
-        hide(scan); show(result); confetti(90); vibrate([20,30,20,30,50]);
-        startBeepLoop();
-        try { if (document.startViewTransition) document.startViewTransition(function(){}); } catch(e){}
+      if(day===3){
+        if(m==='30') return '3–4 rounds';
+        if(m==='45') return base || '4–6 rounds';
+        return '6–8 rounds';
       }
+      return base||'';
     }
 
-    function share(){
-      var text = 'Gaydar result: YOU ARE GAY 🏳️‍🌈 (a totally scientific joke)';
-      if (navigator.share) {
-        navigator.share({ title: 'Gaydar', text: text, url: location.href }).catch(function(){});
-      } else {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text + ' ' + location.href);
+    function shouldShow(block){
+      const m = currentMode();
+      if(m==='30'){
+        // 30 min: Warm-up → Strength A & B → 4–6′ finisher. Hide accessories and optional core/conditioning.
+        return /Strength A|Strength B|Finisher|Cool|Conditioning/.test(block.type);
+      }
+      // 45/60: show all
+      return true;
+    }
+
+    function setCountFor(block){
+      const m = currentMode();
+      let base = block.sets || 0;
+      if(/Strength/.test(block.type)){
+        if(m==='60') base = base + 1; // extra set for full session
+      }
+      return base;
+    }
+
+    function blockId(dayKey, idx){ return `${dayKey}-b${idx}`; }
+
+    function renderSession(dayKey){
+      const container = $('#session');
+      container.innerHTML = '';
+      const dayNum = Number(dayKey.replace('day',''));
+      const day = PROGRAM[dayKey];
+
+      // Header row
+      const head = document.createElement('div');
+      head.className = 'grid';
+      head.style.gap = '8px';
+      head.innerHTML = `
+        <div class="tip"><strong>${dayKey.toUpperCase()}</strong>: ${day.title}
+          <div class="small muted">Time‑box: <span id="mode-label"></span>. Accessories are hidden for 30‑minute sessions.</div>
+        </div>`;
+      container.appendChild(head);
+
+      // Swaps card
+      const swaps = document.createElement('details');
+      swaps.innerHTML = `<summary>Quick swaps by equipment/feel</summary>
+        <ul>${PROGRAM.swaps.map(s=>`<li>${s}</li>`).join('')}</ul>`;
+      container.appendChild(swaps);
+
+      // Blocks
+      day.blocks.forEach((b, i)=>{
+        if(!shouldShow(b)) return;
+        const card = document.createElement('div');
+        card.className = 'block';
+        const sets = setCountFor(b);
+        const isFin = /Finisher|Conditioning/.test(b.type);
+        const isCooldown = /Cool/.test(b.type);
+        const tag = isFin? '<span class="tag warn">High effort</span>' : /Strength/.test(b.type)? '<span class="tag">Strength</span>' : /Accessory|Core/.test(b.type)? '<span class="tag good">Accessory</span>' : '<span class="tag">\u200b</span>';
+
+        let reps = b.reps||'';
+        if(isFin){ reps = dynamicFinisher(dayNum, b.reps); }
+
+        card.innerHTML = `
+          <h4>${tag} ${b.type}: <em>${b.ex}</em></h4>
+          <div class="kv"><div>Sets × Reps</div><div>${sets? `${sets} × ${reps}` : reps}</div></div>
+          ${b.load? `<div class=\"kv\"><div>Load/Tempo</div><div>${b.load}${b.tempo?`, ${b.tempo}`:''}</div></div>`:''}
+          ${b.rest? `<div class=\"kv\"><div>Rest</div><div>${b.rest}</div></div>`:''}
+          ${b.notes? `<div class=\"kv\"><div>Notes</div><div class=\"muted\">${b.notes}</div></div>`:''}
+          ${sets? `<div class=\"kv\"><div>Tick sets</div><div class=\"sets\" id=\"${blockId(dayKey,i)}\"></div></div>`:''}
+          ${isFin? `<div class=\"cta-row\"><button class=\"btn alt\" data-finisher=\"${dayNum}\">Start in Timer</button></div>`:''}
+        `;
+        container.appendChild(card);
+
+        // Render set boxes if applicable
+        if(sets){
+          const boxWrap = $('#'+blockId(dayKey,i));
+          const saved = (state.ticks||{})[blockId(dayKey,i)]||[];
+          for(let s=1; s<=sets; s++){
+            const sb = document.createElement('div'); sb.className='setbox'; sb.textContent=s;
+            if(saved.includes(s)) sb.classList.add('done');
+            sb.addEventListener('click', ()=>{
+              sb.classList.toggle('done');
+              const all = $$('.setbox', boxWrap); const done = all.filter(x=>x.classList.contains('done')).map(x=>Number(x.textContent));
+              state.ticks = state.ticks||{}; state.ticks[blockId(dayKey,i)] = done; save(state);
+              if(navigator.vibrate) navigator.vibrate(20);
+            });
+            boxWrap.appendChild(sb);
+          }
         }
-        alert('Result copied. Paste it anywhere!');
+      });
+
+      // Update mode label
+      const m = currentMode();
+      const label = m==='30'? 'Warm‑up → Strength A & B → 4–6′ finisher' : m==='45'? 'Warm‑up → Strength A & B → Accessories → Finisher → Short cool‑down' : '45‑min flow + extra set on mains & longer finisher';
+      $('#mode-label').textContent = label;
+
+      // Wire finisher buttons
+      $$('button[data-finisher]').forEach(btn=>{
+        btn.addEventListener('click', ()=> loadFinisherIntoTimer(Number(btn.dataset.finisher)));
+      })
+    }
+
+    function loadFinisherIntoTimer(dayNum){
+      setTab('timer');
+      const m = currentMode();
+      // map finisher durations based on mode
+      if(dayNum===1){ // EMOM
+        $('#tt-emom').checked = true;
+        const dur = m==='30'? 6 : m==='45'? 9 : 12;
+        $('#mins').value = String(dur);
+        $('#secs').value = '0';
+        $('#timehint').textContent = `EMOM loaded for Day ${dayNum}. 12 KB swings + 8 push‑ups per minute.`;
+      } else if(dayNum===2){ // AMRAP
+        $('#tt-amrap').checked = true;
+        const dur = m==='30'? 8 : m==='45'? 10 : 14;
+        $('#mins').value = String(dur);
+        $('#secs').value = '0';
+        $('#timehint').textContent = 'AMRAP loaded: 10 swings → 12 reverse lunges (goblet) → 10 DB presses.';
+      } else if(dayNum===3){ // Complex rounds — use countdown as guide
+        $('#tt-cd').checked = true;
+        const dur = m==='30'? 10 : m==='45'? 16 : 20;
+        $('#mins').value = String(dur);
+        $('#secs').value = '0';
+        $('#timehint').textContent = 'Complex loaded: target the indicated rounds; rest 60–90s between rounds.';
       }
+      updateFace();
     }
 
-    function copy(){
-      var text = 'YOU ARE GAY 🏳️‍🌈 — from Gaydar (joke app)';
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
-      alert('Copied to clipboard.');
+    // Quick loads
+    $$('button[data-quick]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        setTab('timer');
+        if(b.dataset.quick==='ladder'){
+          $('#tt-cd').checked = true; $('#mins').value='8'; $('#secs').value='0';
+          $('#timehint').textContent = 'Swing Ladder: 10/15/20 swings + 10 push‑ups. Rest as needed.';
+        } else if(b.dataset.quick==='pair'){
+          $('#tt-cd').checked = true; $('#mins').value='6'; $('#secs').value='0';
+          $('#timehint').textContent = 'Strength Pair: 2 rounds — Goblet Squat 12, 1‑Arm Row 12/side.';
+        } else {
+          $('#tt-cd').checked = true; $('#mins').value='6'; $('#secs').value='0';
+          $('#timehint').textContent = 'Core & Shoulders: Pallof 12/side, Face Pull 15, for 3 rounds.';
+        }
+        updateFace();
+      });
+    });
+
+    // ---------- Tabs ----------
+    $$('nav.tabs button').forEach(btn=>{
+      btn.addEventListener('click', ()=> setTab(btn.dataset.tab));
+    });
+
+    // Maintain active day & mode
+    const dayButtons = $$('.day-btn');
+    dayButtons.forEach(btn=> btn.addEventListener('click', ()=>{
+      dayButtons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const day = btn.dataset.day;
+      state.day = day; save(state);
+      renderSession('day'+day);
+    }));
+    $$('input[name="mode"]').forEach(r=> r.addEventListener('change', ()=>{ state.mode = currentMode(); save(state); renderSession('day'+(state.day||1)); }));
+
+    // ---------- Timer ----------
+    let timer=null, total=30, left=30, emomMark=0, running=false;
+
+    function updateFace(){
+      total = Number($('#mins').value||0)*60 + Number($('#secs').value||0);
+      if(!running) left = total; // only set left when idle
+      $('#timeface').textContent = fmt(left);
+    }
+    function fmt(s){ const m = Math.floor(s/60), x = s%60; return `${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`; }
+
+    function beep(short=true){
+      try{
+        const ctx = new (window.AudioContext||window.webkitAudioContext)();
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type='sine'; o.frequency.value = short? 880: 440;
+        g.gain.setValueAtTime(0.001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime+0.01);
+        o.start();
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (short?0.12:0.3));
+        o.stop(ctx.currentTime + (short?0.15:0.35));
+      }catch(e){ /* no‑op */ }
+      if(navigator.vibrate) navigator.vibrate(short? 40: 120);
     }
 
-    if (startBtn) startBtn.addEventListener('click', startScan);
-    if (againBtn) againBtn.addEventListener('click', function(){ stopBeepLoop(); show(home); hide(result); });
-    if (shareBtn) shareBtn.addEventListener('click', share);
-    if (copyBtn) copyBtn.addEventListener('click', copy);
-    if (beepBtn) beepBtn.addEventListener('click', function(){ beepTimer ? stopBeepLoop() : startBeepLoop(); });
+    function startTimer(){
+      if(running) return; running=true;
+      total = Number($('#mins').value||0)*60 + Number($('#secs').value||0);
+      if(left<=0) left = total;
+      const mode = document.querySelector('input[name="tt"]:checked').value;
+      emomMark = left; // track minute boundaries from remaining time
+      $('#timehint').textContent = mode==='emom'? 'EMOM running — beep each minute.': mode==='amrap'? 'AMRAP running — smooth pace, tidy reps.' : 'Countdown running.';
+      clearInterval(timer);
+      timer = setInterval(()=>{
+        if(left<=0){ clearInterval(timer); running=false; $('#timehint').textContent='Complete — cracking work.'; for(let i=0;i<3;i++){ setTimeout(()=>beep(false), i*400);} return; }
+        left--;
+        $('#timeface').textContent = fmt(left);
+        // EMOM beep on each minute boundary
+        if(document.querySelector('input[name="tt"]:checked').value==='emom'){
+          const prev = emomMark; const now = left;
+          if(Math.floor(prev/60) !== Math.floor(now/60)) beep(true);
+          emomMark = now;
+        }
+      }, 1000);
+    }
+
+    $('#start').addEventListener('click', ()=> startTimer());
+    $('#pause').addEventListener('click', ()=> { running=false; clearInterval(timer); $('#timehint').textContent='Paused.'; });
+    $('#reset').addEventListener('click', ()=> { running=false; clearInterval(timer); left = Number($('#mins').value||0)*60 + Number($('#secs').value||0); updateFace(); $('#timehint').textContent='Ready.'; });
+    $('#mins').addEventListener('input', updateFace); $('#secs').addEventListener('input', updateFace);
+
+    // ---------- Notes ----------
+    function saveNotes(){
+      const d = new Date(); const key = d.toISOString().slice(0,10);
+      state.notes = state.notes||{}; state.notes[key] = $('#journal').value; save(state);
+      $('#notes-status').textContent = `Saved for ${key}.`;
+    }
+    $('#save-notes').addEventListener('click', saveNotes);
+    $('#export-notes').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(state.notes||{}, null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'britfit-notes.json'; a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    // ---------- Settings ----------
+    $('#reset-progress').addEventListener('click', ()=>{
+      if(!confirm('Reset all set ticks?')) return;
+      if(state.ticks) delete state.ticks; save(state); renderSession('day'+(state.day||1));
+    });
+    $('#clear-storage').addEventListener('click', ()=>{
+      if(!confirm('Clear all saved data (ticks, mode, notes)?')) return;
+      localStorage.removeItem(STORAGE_KEY); location.reload();
+    });
+
+    // ---------- Init ----------
+    function init(){
+      rotateTip();
+      const d = state.day || 1; const m = state.mode || '30';
+      document.querySelector(`.day-btn[data-day='${d}']`).classList.add('active');
+      document.querySelector(`#m${m}`).checked = true;
+      renderSession('day'+d);
+      updateFace();
+    }
+    init();
   </script>
 </body>
 </html>
